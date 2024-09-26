@@ -1,0 +1,114 @@
+/* responsive.css */
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+    #ecg-container {
+        flex-direction: column;
+    }
+
+    #ecg-plot {
+        height: 300px;
+        width: 100%;
+    }
+
+    #controls {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    #controls button, #controls select {
+        padding: 6px;
+        font-size: 10px;
+    }
+
+    #mark-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    #joystick-zone,
+    #crosshair-cursor {
+        display: block;
+    }
+}
+
+/* Estilos para tablets y dispositivos más grandes */
+@media (min-width: 769px) and (max-width: 1024px) {
+    #ecg-plot {
+        height: 400px;
+    }
+
+    #controls {
+        width: 180px;
+    }
+
+    #joystick-zone,
+    #crosshair-cursor {
+        display: block;
+    }
+}
+
+/* Estilos para escritorio */
+@media (min-width: 1025px) {
+    #ecg-container {
+        flex-direction: row;
+    }
+
+    #ecg-plot {
+        height: 500px;
+        flex: 1;
+    }
+
+    #controls {
+        width: 200px;
+    }
+
+    #joystick-zone,
+    #crosshair-cursor {
+        display: none;
+    }
+}
+
+/* Estilos para orientación vertical en dispositivos móviles */
+@media (max-width: 768px) and (orientation: portrait) {
+    #rotate-message {
+        display: flex;
+    }
+}
+
+/* Estilos para orientación horizontal en dispositivos móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+    #rotate-message {
+        display: none;
+    }
+
+    #ecg-plot {
+        height: 200px;
+    }
+
+    #controls {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+
+    #mark-buttons {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* Ajustes para pantallas de alta resolución */
+@media (min-width: 1441px) {
+    #ecg-plot {
+        height: 600px;
+    }
+
+    #controls {
+        width: 100px;
+    }
+    #mark-buttons {
+        width: 50%;
+        margin-bottom: 5px;
+    }
+}

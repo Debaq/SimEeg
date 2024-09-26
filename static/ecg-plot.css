@@ -1,0 +1,6 @@
+#ecg-plot {
+    flex: 1;
+    min-width: 200px;
+    height: 400px;
+    border: 1px solid #ccc;
+}

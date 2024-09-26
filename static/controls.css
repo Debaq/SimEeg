@@ -1,0 +1,112 @@
+/* controls.css */
+
+#controls {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    width: 200px;
+    min-width: 200px;
+}
+
+#controls button, #controls select {
+    margin: 5px 0;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+#toggle-data {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+#toggle-data:hover, #toggle-data:focus {
+    background-color: #45a049;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+#dropdown-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+#dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#dropdown-content button, #dropdown-content select {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background-color: transparent;
+}
+
+#dropdown-content button:hover, #dropdown-content select:hover {
+    background-color: #f1f1f1;
+}
+
+.show {
+    display: block;
+}
+
+#mark-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    #controls {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .dropdown {
+        width: 50%;
+    }
+
+    #toggle-data {
+        width: 45%;
+        font-size: 14px;
+    }
+
+    #dropdown-content {
+        right: 0;
+    }
+}
+
+/* Prevenir doble tap zoom en iOS */
+@media (hover: none) {
+    #toggle-data {
+        -webkit-tap-highlight-color: transparent;
+    }
+}

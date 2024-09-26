@@ -1,0 +1,39 @@
+#rotate-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+}
+
+.rotate-content {
+    padding: 20px;
+}
+
+.rotate-content p {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.rotate-content svg {
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Asegurarse de que el mensaje se muestre solo en modo retrato en dispositivos móviles */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    #rotate-message {
+        display: flex;
+    }
+}

@@ -1,0 +1,98 @@
+/* joystick.css */
+
+#joystick-zone {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    width: 100px;
+    height: 100px;
+    z-index: 1000;
+    /* Visible por defecto, se ocultará en escritorio via media queries */
+    display: block;
+}
+
+#crosshair-cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 9999;
+    /* Visible por defecto, se ocultará en escritorio via media queries */
+    display: block;
+}
+
+#crosshair-cursor::before,
+#crosshair-cursor::after {
+    content: "";
+    position: absolute;
+    background-color: red;
+}
+
+#crosshair-cursor::before {
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+#crosshair-cursor::after {
+    top: 50%;
+    height: 2px;
+    width: 100%;
+    transform: translateY(-50%);
+}
+
+/* Estilos para el área activa del joystick */
+.nipple {
+    opacity: 0.8;
+}
+
+/* Estilos para el "stick" del joystick */
+.front {
+    background-color: #4285f4 !important;
+}
+
+/* Estilos para la base del joystick */
+.back {
+    background-color: rgba(66, 133, 244, 0.3) !important;
+}
+
+/* Media queries para ajustar la visibilidad en diferentes tamaños de pantalla */
+@media (max-width: 768px) {
+    #joystick-zone,
+    #crosshair-cursor {
+        display: block;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    #joystick-zone,
+    #crosshair-cursor {
+        display: block;
+    }
+}
+
+@media (min-width: 1025px) {
+    #joystick-zone,
+    #crosshair-cursor {
+        display: none;
+    }
+}
+
+/* Ajustes para orientación horizontal en móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+    #joystick-zone {
+        right: 10px;
+        bottom: 10px;
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* Ajustes para pantallas más pequeñas */
+@media (max-width: 320px) {
+    #joystick-zone {
+        width: 80px;
+        height: 80px;
+    }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FisioAccess V2.1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"></script>
+</head>
+<body>
+    <div id="ecg-container">
+        <div id="ecg-plot"></div>
+        <div id="controls">
+            <button id="toggle-data">Detener Datos</button>
+            <div class="dropdown">
+                <button id="dropdown-btn">Opciones</button>
+                <div id="dropdown-content" class="dropdown-content">
+                    <button id="measure">Medir Distancia</button>
+                    <div id="mark-buttons">
+                        <button class="mark-button" data-mark="P">P</button>
+                        <button class="mark-button" data-mark="Q">Q</button>
+                        <button class="mark-button" data-mark="R">R</button>
+                        <button class="mark-button" data-mark="S">S</button>
+                        <button class="mark-button" data-mark="T">T</button>
+                        <button class="mark-button" data-mark="U">U</button>
+                    </div>
+                    <select id="interval-type">
+                        <option value="">Seleccionar Intervalo/Segmento</option>
+                        <option value="Intervalo PR">Intervalo PR</option>
+                        <option value="Segmento PR">Segmento PR</option>
+                        <option value="Intervalo QT">Intervalo QT</option>
+                        <option value="Segmento ST">Segmento ST</option>
+                        <option value="Complejo QRS">Complejo QRS</option>
+                        <option value="Intervalo R-R">Intervalo R-R</option>
+                    </select>
+                    <button id="export-image">Exportar Imagen</button>
+                    <button id="delete-last-annotation">Eliminar Última Anotación</button>
+                    <button id="delete-all-annotations">Eliminar Todas las Anotaciones</button>
+                    <button id="manage-elements">Gestionar Elementos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="crosshair-cursor"></div>
+    <div id="joystick-zone"></div>
+    <div id="rotate-message"></div>
+
+
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador ECG Avanzado</title>
+    <!-- Incluimos la librería de Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.20.0.min.js"></script>
+    <style>
+        /* Estilos generales */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Contenedor principal */
+        #ecg-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        /* Estilo del gráfico */
+        #ecg-plot {
+            flex: 1 1 600px;
+            min-width: 300px;
+            height: 400px;
+        }
+
+        /* Estilo de los controles */
+        #controls {
+            display: flex;
+            flex-direction: column;
+            margin-left: 20px;
+            min-width: 200px;
+        }
+
+        #controls button {
+            margin: 5px 0;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Contenedor para las marcas */
+        #mark-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #mark-buttons button {
+            flex: 1 1 30%;
+            margin: 5px;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Adaptabilidad para pantallas pequeñas */
+        @media (max-width: 768px) {
+            #ecg-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            #controls button {
+                flex: 1 1 45%;
+                margin: 5px;
+            }
+
+            #mark-buttons button {
+                flex: 1 1 30%;
+                margin: 5px;
+            }
+
+            #ecg-plot {
+                width: 100%;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="ecg-container">
+        <div id="ecg-plot"></div>
+        <div id="controls">
+            <button id="measure">Medir Distancia</button>
+            <div id="mark-buttons">
+                <button class="mark-button" data-mark="P">P</button>
+                <button class="mark-button" data-mark="Q">Q</button>
+                <button class="mark-button" data-mark="R">R</button>
+                <button class="mark-button" data-mark="S">S</button>
+                <button class="mark-button" data-mark="T">T</button>
+                <button class="mark-button" data-mark="U">U</button>
+            </div>
+            <select id="interval-type">
+                <option value="">Seleccionar Intervalo/Segmento</option>
+                <option value="Intervalo PR">Intervalo PR</option>
+                <option value="Segmento PR">Segmento PR</option>
+                <option value="Intervalo QT">Intervalo QT</option>
+                <option value="Segmento ST">Segmento ST</option>
+                <option value="Complejo QRS">Complejo QRS</option>
+                <option value="Intervalo R-R">Intervalo R-R</option>
+            </select>
+            <button id="toggle-data">Detener Datos</button>
+            <button id="export-image">Exportar Imagen</button>
+            <button id="delete-last-annotation">Eliminar Última Anotación</button>
+            <button id="delete-all-annotations">Eliminar Todas las Anotaciones</button>
+        </div>
+    </div>
+    <script>
+        let isDataFlowing = true;
+        let startTime = null;
+
+        const layout = {
+            margin: { t: 30, b: 30, l: 50, r: 20 },
+            xaxis: { 
+                title: 'Tiempo (s)',
+                fixedrange: true,
+                range: [0, 5]
+            },
+            yaxis: { 
+                title: 'Amplitud (mV)', 
+                range: [-0.5, 1.5],
+                fixedrange: true
+            },
+            shapes: [],
+            annotations: []
+        };
+
+        const config = {
+            responsive: true,
+            scrollZoom: false,
+            displayModeBar: true,
+            displaylogo: false,
+            editable: true, // Habilitamos la edición para mover anotaciones
+            modeBarButtonsToRemove: ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']
+        };
+
+        Plotly.newPlot('ecg-plot', [{
+            x: [],
+            y: [],
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#00b300', width: 1.5 }
+        }], layout, config);
+
+        function updateECG() {
+            if (!isDataFlowing) return;
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (startTime === null) {
+                        startTime = data.x[0];
+                    }
+                    
+                    let adjustedX = data.x.map(x => x - startTime);
+                    
+                    Plotly.extendTraces('ecg-plot', {
+                        x: [adjustedX.slice(-1)],
+                        y: [data.y.slice(-1)]
+                    }, [0]);
+
+                    let currentTime = adjustedX[adjustedX.length - 1];
+                    if (currentTime > 5) {
+                        Plotly.relayout('ecg-plot', {
+                            'xaxis.range': [currentTime - 5, currentTime]
+                        });
+                    }
+                });
+        }
+
+        setInterval(updateECG, 10);
+
+        // Variables para seguimiento de mediciones y anotaciones
+        let measuring = false;
+        let addingMark = false;
+        let addingInterval = false;
+        let selectedMark = '';
+        let selectedInterval = '';
+        let measurementIndex = 0;
+        let measurementShapes = [];
+        let measurementAnnotations = [];
+        let previousShapesLength = 0;
+        let labelAnnotations = [];
+        let previousAnnotationsLength = 0;
+        const measurementColors = ['#FF0000', '#00FF00', '#0000FF', '#FF00FF', '#00FFFF'];
+
+        // Evento del botón "Medir Distancia"
+        document.getElementById('measure').addEventListener('click', function() {
+            measuring = true;
+            addingMark = false;
+            addingInterval = false;
+            selectedMark = '';
+            selectedInterval = '';
+            // Activar el modo de dibujo de líneas
+            Plotly.relayout('ecg-plot', {dragmode: 'drawline'});
+        });
+
+        // Eventos para los botones de marcas
+        const markButtons = document.querySelectorAll('.mark-button');
+        markButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                selectedMark = this.getAttribute('data-mark');
+                addingMark = true;
+                measuring = false;
+                addingInterval = false;
+                selectedInterval = '';
+                // Activar el modo de dibujo de texto
+                Plotly.relayout('ecg-plot', {dragmode: 'drawtext'});
+            });
+        });
+
+        // Evento del selector de intervalos
+        document.getElementById('interval-type').addEventListener('change', function() {
+            selectedInterval = this.value;
+            if (selectedInterval !== '') {
+                addingInterval = true;
+                addingMark = false;
+                measuring = false;
+                selectedMark = '';
+                // Activar el modo de dibujo de líneas
+                Plotly.relayout('ecg-plot', {dragmode: 'drawline'});
+            } else {
+                addingInterval = false;
+                Plotly.relayout('ecg-plot', {dragmode: 'zoom'});
+            }
+        });
+
+        // Evento plotly_relayout para detectar nuevas formas o anotaciones
+        document.getElementById('ecg-plot').on('plotly_relayout', function(eventdata) {
+            let fullLayout = document.getElementById('ecg-plot').layout;
+            let shapes = fullLayout.shapes || [];
+            let annotations = fullLayout.annotations || [];
+
+            // Manejo de mediciones
+            if (measuring) {
+                // Comprobar si se ha añadido una nueva línea
+                if (shapes.length > previousShapesLength) {
+                    let lastShape = shapes[shapes.length - 1];
+
+                    if (lastShape.type === 'line') {
+                        let x0 = lastShape.x0;
+                        let y0 = lastShape.y0;
+                        let x1 = lastShape.x1;
+                        let y1 = lastShape.y1;
+
+                        // Calcular las diferencias en x (tiempo) y y (amplitud)
+                        let deltaX = x1 - x0; // Diferencia en tiempo (s)
+                        let deltaY = y1 - y0; // Diferencia en amplitud (mV)
+                        let deltaYMicroV = deltaY * 1000; // Convertir a µV
+
+                        // Formatear el texto de la medición
+                        let deltaXFormatted = deltaX.toFixed(2) + ' s';
+                        let deltaYFormatted = deltaYMicroV.toFixed(2) + ' µV';
+                        let measurementText = '(' + deltaXFormatted + ' / ' + deltaYFormatted + ')';
+
+                        // Posicionar la anotación para que no obstruya la línea
+                        let annotationX = (x0 + x1) / 2;
+                        let annotationY = Math.max(y0, y1) + 0.1; // Ajustar según sea necesario
+
+                        // Actualizar el color y grosor de la línea
+                        lastShape.line.color = measurementColors[measurementIndex % measurementColors.length];
+                        lastShape.line.width = 2; // Grosor reducido
+
+                        // Añadir la forma a nuestras listas
+                        measurementShapes.push(lastShape);
+
+                        // Crear la anotación
+                        let annotation = {
+                            x: annotationX,
+                            y: annotationY,
+                            text: measurementText,
+                            showarrow: false,
+                            font: { color: 'black', size: 12 },
+                            bgcolor: 'rgba(255, 255, 255, 0.7)',
+                            bordercolor: 'black',
+                            borderwidth: 1
+                        };
+
+                        // Añadir la anotación a nuestra lista
+                        measurementAnnotations.push(annotation);
+
+                        // Actualizar el layout con las nuevas formas y anotaciones
+                        Plotly.relayout('ecg-plot', {
+                            shapes: measurementShapes,
+                            annotations: labelAnnotations.concat(measurementAnnotations)
+                        });
+
+                        // Actualizar índices y estados
+                        measurementIndex++;
+                        measuring = false;
+                        previousShapesLength = shapes.length;
+
+                        // Restaurar el modo de arrastre predeterminado
+                        Plotly.relayout('ecg-plot', {dragmode: 'zoom'});
+                    }
+                }
+            }
+
+            // Manejo de intervalos y segmentos
+            if (addingInterval) {
+                // Comprobar si se ha añadido una nueva línea
+                if (shapes.length > previousShapesLength) {
+                    let lastShape = shapes[shapes.length - 1];
+
+                    if (lastShape.type === 'line') {
+                        let x0 = lastShape.x0;
+                        let y0 = lastShape.y0;
+                        let x1 = lastShape.x1;
+                        let y1 = lastShape.y1;
+
+                        // Calcular las diferencias en x (tiempo)
+                        let deltaX = x1 - x0; // Diferencia en tiempo (s)
+                        let deltaXFormatted = deltaX.toFixed(2) + ' s';
+
+                        // Texto de la medición con el nombre del intervalo o segmento
+                        let measurementText = selectedInterval + ': ' + deltaXFormatted;
+
+                        // Posicionar la anotación para que no obstruya la línea
+                        let annotationX = (x0 + x1) / 2;
+                        let annotationY = Math.max(y0, y1) + 0.1; // Ajustar según sea necesario
+
+                        // Actualizar el color y grosor de la línea
+                        lastShape.line.color = 'blue';
+                        lastShape.line.width = 2; // Grosor reducido
+
+                        // Añadir la forma a nuestras listas
+                        measurementShapes.push(lastShape);
+
+                        // Crear la anotación
+                        let annotation = {
+                            x: annotationX,
+                            y: annotationY,
+                            text: measurementText,
+                            showarrow: false,
+                            font: { color: 'blue', size: 12 },
+                            bgcolor: 'rgba(255, 255, 255, 0.7)',
+                            bordercolor: 'blue',
+                            borderwidth: 1
+                        };
+
+                        // Añadir la anotación a nuestra lista
+                        measurementAnnotations.push(annotation);
+
+                        // Actualizar el layout con las nuevas formas y anotaciones
+                        Plotly.relayout('ecg-plot', {
+                            shapes: measurementShapes,
+                            annotations: labelAnnotations.concat(measurementAnnotations)
+                        });
+
+                        // Actualizar índices y estados
+                        addingInterval = false;
+                        selectedInterval = '';
+                        previousShapesLength = shapes.length;
+                        document.getElementById('interval-type').value = '';
+
+                        // Restaurar el modo de arrastre predeterminado
+                        Plotly.relayout('ecg-plot', {dragmode: 'zoom'});
+                    }
+                }
+            }
+
+            // Manejo de marcas
+            if (addingMark) {
+                // Comprobar si se ha añadido una nueva anotación
+                if (annotations.length > previousAnnotationsLength) {
+                    let lastAnnotation = annotations[annotations.length - 1];
+
+                    lastAnnotation.text = selectedMark;
+                    lastAnnotation.font = { color: 'black', size: 14 };
+                    lastAnnotation.showarrow = true;
+                    lastAnnotation.arrowhead = 2;
+                    lastAnnotation.arrowsize = 1;
+                    lastAnnotation.arrowwidth = 2;
+                    lastAnnotation.arrowcolor = 'black';
+                    lastAnnotation.ax = 0;
+                    lastAnnotation.ay = -30;
+
+                    labelAnnotations.push(lastAnnotation);
+
+                    // Actualizar el layout con las nuevas anotaciones
+                    Plotly.relayout('ecg-plot', {
+                        annotations: labelAnnotations.concat(measurementAnnotations)
+                    });
+
+                    // Actualizar estados
+                    addingMark = false;
+                    selectedMark = '';
+                    previousAnnotationsLength = annotations.length;
+
+                    // Restaurar el modo de arrastre predeterminado
+                    Plotly.relayout('ecg-plot', {dragmode: 'zoom'});
+                }
+            }
+        });
+
+        // Evento para detener o reanudar datos
+        document.getElementById('toggle-data').addEventListener('click', function() {
+            isDataFlowing = !isDataFlowing;
+            this.textContent = isDataFlowing ? 'Detener Datos' : 'Reanudar Datos';
+        });
+
+        // Evento para exportar imagen
+        document.getElementById('export-image').addEventListener('click', function() {
+            Plotly.toImage('ecg-plot', {format: 'png', width: 800, height: 600}).then(function(dataUrl) {
+                const link = document.createElement('a');
+                link.download = 'ecg_plot.png';
+                link.href = dataUrl;
+                link.click();
+            });
+        });
+
+        // Evento para eliminar la última anotación
+        document.getElementById('delete-last-annotation').addEventListener('click', function() {
+            if (measurementAnnotations.length > 0 || labelAnnotations.length > 0) {
+                if (measurementAnnotations.length > 0) {
+                    measurementAnnotations.pop();
+                    measurementShapes.pop();
+                    previousShapesLength = measurementShapes.length;
+                } else if (labelAnnotations.length > 0) {
+                    labelAnnotations.pop();
+                    previousAnnotationsLength = labelAnnotations.length;
+                }
+
+                Plotly.relayout('ecg-plot', {
+                    annotations: labelAnnotations.concat(measurementAnnotations),
+                    shapes: measurementShapes
+                });
+            } else {
+                alert('No hay anotaciones para eliminar.');
+            }
+        });
+
+        // Evento para eliminar todas las anotaciones
+        document.getElementById('delete-all-annotations').addEventListener('click', function() {
+            if (measurementAnnotations.length > 0 || labelAnnotations.length > 0) {
+                measurementAnnotations = [];
+                measurementShapes = [];
+                labelAnnotations = [];
+                previousShapesLength = 0;
+                previousAnnotationsLength = 0;
+
+                Plotly.relayout('ecg-plot', {
+                    annotations: [],
+                    shapes: []
+                });
+            } else {
+                alert('No hay anotaciones para eliminar.');
+            }
+        });
+
+        // Ajustar el gráfico al redimensionar la ventana
+        window.addEventListener('resize', function() {
+            Plotly.Plots.resize('ecg-plot');
+        });
+    </script>
+</body>
+</html>
