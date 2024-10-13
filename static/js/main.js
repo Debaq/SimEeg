@@ -1,4 +1,6 @@
-import { initPlot, updateECG } from './ecgPlot.js';
+// main.js
+
+import { initPlot, toggleDataFlow } from './ecgPlot.js';
 import { setupEventListeners } from './eventHandlers.js';
 import { showECGContent } from './uiController.js';
 import { initJoystick } from './joystick.js';  
@@ -17,9 +19,6 @@ function init() {
         setupEventListeners();
         console.log('Event listeners set up');
     }, 100);
-    
-    // Iniciar la actualización periódica del ECG
-    setInterval(updateECG, 10);
     
     // Inicializar componentes adicionales
     initJoystick();  
@@ -43,8 +42,6 @@ if (document.readyState === 'loading') {
 }
 
 // Exponer funciones globales si es necesario
-window.toggleDataFlow = function() {
-    // Implementar la lógica para alternar el flujo de datos si es necesario
-};
+window.toggleDataFlow = toggleDataFlow;
 
 // Otras funciones globales o configuraciones que puedan ser necesarias
